@@ -23,7 +23,7 @@ Este README es tu **guía paso a paso** para entender Snowflake y levantar una c
 
 Todo en Snowflake vive en una jerarquía clara. Conviene tenerla en la cabeza antes de ver código.
 
-| Nivel      | Qué es en la práctica | Analogía rápida |
+| Nivel      | Qué es en la práctica | Analogía  |
 |-----------|------------------------|------------------|
 | **Account** | Tu contrato con Snowflake; todo lo que creas vive aquí. | La “empresa” o “cuenta” en la nube. |
 | **Database** | Un contenedor de alto nivel. Agrupa todo lo que pertenece a un dominio o producto. | Una “carpeta raíz” por área (por ejemplo: Finanzas, CRM). |
@@ -143,27 +143,27 @@ La siguiente figura resume la jerarquía que creamos: cuentas → bases por domi
 
 ```
                     ┌─────────────────────────────────────────────────────────┐
-                    │                    SNOWFLAKE ACCOUNT                      │
+                    │                    SNOWFLAKE ACCOUNT                    │
                     └─────────────────────────────────────────────────────────┘
                                               │
          ┌────────────────────────────────────┼────────────────────────────────────┐
          │                                    │                                    │
          ▼                                    ▼                                    ▼
-┌─────────────────┐              ┌─────────────────┐              ┌─────────────────┐
-│   ERP_<ENV>     │              │   CRM_<ENV>     │              │   SCM_<ENV>     │
-│   └─ FINANCE    │              │   └─ CUSTOMERS  │              │   └─ LOGISTICS  │
-│      ├─ INVOICES│              │      ├─ CONTACTS│              │      ├─ SHIPMENTS│
-│      └─ COST_   │              │      └─ OPPORT.│              │      └─ SUPPLIERS│
-│         CENTERS │              │                │              │                 │
-└─────────────────┘              └─────────────────┘              └─────────────────┘
+┌──────────────────────┐              ┌───────────────────┐                 ┌───────────────────┐
+│   ERP_<ENV>          │              │   CRM_<ENV>       │                 │   SCM_<ENV>       │
+│   └─ FINANCE         │              │   └─ CUSTOMERS    │                 │   └─ LOGISTICS    │
+│      ├─ INVOICES     │              │      ├─ CONTACTS  │                 │      ├─ SHIPMENTS │
+│      └─ COST_CENTERS │              │      └─ OPPORT.   │                 │      └─ SUPPLIERS │
+│                      │              │                   │                 │                   │
+└──────────────────────┘              └───────────────────┘                 └───────────────────┘
          │                                    │                                    │
          └────────────────────────────────────┼────────────────────────────────────┘
                                               │
                     ┌─────────────────────────┼─────────────────────────┐
                     ▼                         ▼                         ▼
-         ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-         │ WH_INGESTION_*   │    │ WH_ANALYTICS_*   │    │ WH_ADMIN_*       │
-         └──────────────────┘    └──────────────────┘    └──────────────────┘
+            ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+            │ WH_INGESTION_*   │    │ WH_ANALYTICS_*   │    │ WH_ADMIN_*       │
+            └──────────────────┘    └──────────────────┘    └──────────────────┘
                                               │
                     Object Roles (por schema): OR_READ_* | OR_WRITE_* | OR_ADMIN_*
                                               │

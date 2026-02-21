@@ -1,7 +1,6 @@
-# Copiar a terraform.tfvars y rellenar con tus credenciales (ver README).
-
-snowflake_account  = "TU_ACCOUNT_ID"
-snowflake_region   = ""
-snowflake_user     = "TU_USUARIO"
-snowflake_password = "TU_PASSWORD"
-snowflake_role     = "SYSADMIN"
+snowflake_organization_name = " "
+snowflake_account_name      = " "
+snowflake_region            = " "
+snowflake_user     = " "      # Usuario con SYSADMIN/ACCOUNTADMIN
+snowflake_password = " "     # Mejor: export TF_VAR_snowflake_password=...
+snowflake_role     = " "        # Role con permisos para crear DB, roles, etc.

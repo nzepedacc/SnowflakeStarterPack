@@ -19,11 +19,17 @@ terraform {
 }
 
 provider "snowflake" {
-  account = var.snowflake_account
-  region  = var.snowflake_region
-  username = var.snowflake_user
-  password = var.snowflake_password
-  role     = var.snowflake_role
+  # Formato org + account: con organization_name y account_name la URL es org-account.snowflakecomputing.com (sin región en la URL)
+  organization_name = var.snowflake_organization_name != "" ? var.snowflake_organization_name : null
+  account_name      = var.snowflake_account_name != "" ? var.snowflake_account_name : null
+  account           = var.snowflake_account != "" ? var.snowflake_account : null
+  # Solo pasar region cuando usas account legacy; con org+account suele dar 404 si se añade región a la URL
+  region        = (var.snowflake_organization_name == "" && var.snowflake_region != "") ? var.snowflake_region : null
+  host          = var.snowflake_host != "" ? var.snowflake_host : null
+  insecure_mode = var.snowflake_insecure_mode
+  user          = var.snowflake_user
+  password      = var.snowflake_password
+  role          = var.snowflake_role
 }
 
 # -----------------------------------------------------------------------------

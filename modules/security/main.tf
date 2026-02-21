@@ -49,11 +49,10 @@ resource "snowflake_password_policy" "onboarding" {
   min_lower_case_chars = var.min_lower_case_chars
   min_numeric_chars    = var.min_numeric_chars
   min_special_chars    = var.min_special_chars
-  max_retries          = var.max_retries
-  lockout_time_mins    = var.lockout_time_mins
-  password_history     = var.password_history
-
-  comment = "Política de contraseña para onboarding: min 12 caracteres, may/min/num/special, 5 intentos, historial 5"
+  max_retries       = var.max_retries
+  lockout_time_mins  = var.lockout_time_mins
+  # password_history no está soportado en este provider; historial se puede configurar vía SQL si se necesita
+  comment = "Política de contraseña para onboarding: min 12 caracteres, may/min/num/special, 5 intentos"
 }
 
 # -----------------------------------------------------------------------------
@@ -64,7 +63,9 @@ resource "snowflake_password_policy" "onboarding" {
 # Sin esto: La policy existiría pero no se aplicaría a nadie hasta asignarla.
 # -----------------------------------------------------------------------------
 resource "snowflake_account_password_policy_attachment" "default" {
-  password_policy_identifier = "${snowflake_database.security.name}.${snowflake_schema.policies.name}.${snowflake_password_policy.onboarding.name}"
+  count = var.attach_password_policy_to_account ? 1 : 0
+
+  password_policy = "${snowflake_database.security.name}.${snowflake_schema.policies.name}.${snowflake_password_policy.onboarding.name}"
 }
 
 # -----------------------------------------------------------------------------

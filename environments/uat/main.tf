@@ -15,11 +15,15 @@ terraform {
 }
 
 provider "snowflake" {
-  account  = var.snowflake_account
-  region   = var.snowflake_region
-  username = var.snowflake_user
-  password = var.snowflake_password
-  role     = var.snowflake_role
+  organization_name = var.snowflake_organization_name != "" ? var.snowflake_organization_name : null
+  account_name      = var.snowflake_account_name != "" ? var.snowflake_account_name : null
+  account           = var.snowflake_account != "" ? var.snowflake_account : null
+  region            = (var.snowflake_organization_name == "" && var.snowflake_region != "") ? var.snowflake_region : null
+  host              = var.snowflake_host != "" ? var.snowflake_host : null
+  insecure_mode     = var.snowflake_insecure_mode
+  user              = var.snowflake_user
+  password          = var.snowflake_password
+  role              = var.snowflake_role
 }
 
 locals {
@@ -83,16 +87,18 @@ module "warehouse" {
 }
 
 module "security" {
-  source           = "../../modules/security"
-  ambiente         = local.ambiente
-  password_history = 5
-  max_retries      = 5
-  min_length       = 12
+  source                          = "../../modules/security"
+  ambiente                        = local.ambiente
+  password_history                = 5
+  max_retries                     = 5
+  min_length                      = 12
+  attach_password_policy_to_account = false
 }
 
 module "rbac" {
-  source          = "../../modules/rbac"
-  ambiente        = local.ambiente
+  source                            = "../../modules/rbac"
+  ambiente                          = local.ambiente
+  create_functional_roles_and_users = false
   schemas = [
     { database_name = module.database_erp.database_name, schema_name = module.database_erp.schema_name, dominio = "ERP", table_names = module.database_erp.table_names },
     { database_name = module.database_crm.database_name, schema_name = module.database_crm.schema_name, dominio = "CRM", table_names = module.database_crm.table_names },

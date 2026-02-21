@@ -12,7 +12,7 @@ resource "snowflake_warehouse" "this" {
   for_each = var.warehouses
 
   name            = "WH_${each.key}_${var.ambiente}"
-  size            = each.value.size
+  warehouse_size  = each.value.size
   auto_suspend    = each.value.auto_suspend
   comment         = each.value.comment
   initially_suspended = true

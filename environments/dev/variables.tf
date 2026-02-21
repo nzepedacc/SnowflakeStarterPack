@@ -5,14 +5,39 @@
 # =============================================================================
 
 variable "snowflake_account" {
-  description = "Identificador de la cuenta Snowflake (ej. xy12345 o xy12345.us-east-1). Cómo obtenerlo: Snowsight -> Admin -> Accounts -> Account identifier."
+  description = "Identificador legacy (ej. xy12345). Si usas organization_name + account_name, puede quedar vacío."
   type        = string
+  default     = ""
+}
+
+variable "snowflake_organization_name" {
+  description = "Nombre de la organización (ej. LCMSCLG si tu identificador es LCMSCLG.WAC97526). Preferir esto + account_name en cuentas recientes."
+  type        = string
+  default     = ""
+}
+
+variable "snowflake_account_name" {
+  description = "Nombre de la cuenta dentro de la org (ej. WAC97526). Usar junto con snowflake_organization_name."
+  type        = string
+  default     = ""
 }
 
 variable "snowflake_region" {
-  description = "Región de la cuenta (ej. us-east-1). Opcional si va incluido en account."
+  description = "Región de la cuenta (ej. us-east-1). Recomendado cuando usas organization_name + account_name."
   type        = string
   default     = ""
+}
+
+variable "snowflake_host" {
+  description = "Opcional: host completo (ej. WAC97526.us-west-2.aws.snowflakecomputing.com). Usar si el certificado TLS falla con account+region; obtén la URL desde la UI de Snowflake al conectarte."
+  type        = string
+  default     = ""
+}
+
+variable "snowflake_insecure_mode" {
+  description = "Si true, no verifica el certificado TLS (solo para pruebas locales si falla el cert). No usar en producción."
+  type        = bool
+  default     = false
 }
 
 variable "snowflake_user" {

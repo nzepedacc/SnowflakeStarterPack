@@ -23,7 +23,7 @@ Este README es tu **guía paso a paso** para entender Snowflake y levantar una c
 
 Todo en Snowflake vive en una jerarquía clara. Conviene tenerla en la cabeza antes de ver código.
 
-| Nivel      | Qué es en la práctica | Analogía  |
+| Nivel      | Qué es en la práctica | Analogía rápida |
 |-----------|------------------------|------------------|
 | **Account** | Tu contrato con Snowflake; todo lo que creas vive aquí. | La “empresa” o “cuenta” en la nube. |
 | **Database** | Un contenedor de alto nivel. Agrupa todo lo que pertenece a un dominio o producto. | Una “carpeta raíz” por área (por ejemplo: Finanzas, CRM). |
@@ -129,9 +129,9 @@ Este repositorio es un **framework de onboarding** que, con Terraform, crea de f
 
 1. **Bases de datos** por dominio (ERP, CRM, SCM) y ambiente (DEV, UAT, PROD), con schemas y tablas ya definidas.
 2. **Warehouses** por propósito (ingestión, analítica, administración) en cada ambiente.
-3. **Políticas de seguridad:** Password Policy aplicada a la cuenta y documentación para MFA.
-4. **Modelo RBAC:** Object Roles por schema, Functional Roles por perfil y usuarios de ejemplo asignados.
-5. **Script de datos ficticios** (opcional) para que puedas practicar SQL sin miedo.
+3. **Políticas de seguridad:** Password Policy (y su asociación a la cuenta solo en DEV cuando se comparte cuenta con UAT/PROD) y documentación para MFA.
+4. **Modelo RBAC:** Object Roles por schema; Functional Roles y usuarios de ejemplo creados solo en DEV cuando todos los ambientes comparten la misma cuenta; UAT y PROD solo crean object roles y los otorgan a los FR_* existentes.
+5. **Script de datos ficticios** (opcional) para practicar SQL.
 
 Cada recurso en el código está comentado en español (qué hace, por qué existe y qué pasaría si no estuviera). El README te lleva de la mano en **conceptos** y **decisiones de diseño**; el código es el **tutorial técnico** línea a línea.
 
@@ -143,27 +143,27 @@ La siguiente figura resume la jerarquía que creamos: cuentas → bases por domi
 
 ```
                     ┌─────────────────────────────────────────────────────────┐
-                    │                    SNOWFLAKE ACCOUNT                    │
+                    │                    SNOWFLAKE ACCOUNT                      │
                     └─────────────────────────────────────────────────────────┘
                                               │
          ┌────────────────────────────────────┼────────────────────────────────────┐
          │                                    │                                    │
          ▼                                    ▼                                    ▼
-┌──────────────────────┐              ┌───────────────────┐                 ┌───────────────────┐
-│   ERP_<ENV>          │              │   CRM_<ENV>       │                 │   SCM_<ENV>       │
-│   └─ FINANCE         │              │   └─ CUSTOMERS    │                 │   └─ LOGISTICS    │
-│      ├─ INVOICES     │              │      ├─ CONTACTS  │                 │      ├─ SHIPMENTS │
-│      └─ COST_CENTERS │              │      └─ OPPORT.   │                 │      └─ SUPPLIERS │
-│                      │              │                   │                 │                   │
-└──────────────────────┘              └───────────────────┘                 └───────────────────┘
+┌─────────────────┐              ┌─────────────────┐              ┌─────────────────┐
+│   ERP_<ENV>     │              │   CRM_<ENV>     │              │   SCM_<ENV>     │
+│   └─ FINANCE    │              │   └─ CUSTOMERS  │              │   └─ LOGISTICS  │
+│      ├─ INVOICES│              │      ├─ CONTACTS│              │      ├─ SHIPMENTS│
+│      └─ COST_   │              │      └─ OPPORT.│              │      └─ SUPPLIERS│
+│         CENTERS │              │                │              │                 │
+└─────────────────┘              └─────────────────┘              └─────────────────┘
          │                                    │                                    │
          └────────────────────────────────────┼────────────────────────────────────┘
                                               │
                     ┌─────────────────────────┼─────────────────────────┐
                     ▼                         ▼                         ▼
-            ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-            │ WH_INGESTION_*   │    │ WH_ANALYTICS_*   │    │ WH_ADMIN_*       │
-            └──────────────────┘    └──────────────────┘    └──────────────────┘
+         ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+         │ WH_INGESTION_*   │    │ WH_ANALYTICS_*   │    │ WH_ADMIN_*       │
+         └──────────────────┘    └──────────────────┘    └──────────────────┘
                                               │
                     Object Roles (por schema): OR_READ_* | OR_WRITE_* | OR_ADMIN_*
                                               │
@@ -224,6 +224,13 @@ Creamos cuatro usuarios ficticios para que puedas probar el RBAC sin tocar usuar
 
 Todos se crean con **must_change_password = true** para que el primer login sea seguro y alineado con la Password Policy.
 
+**Contraseña inicial:** Terraform **no asigna contraseña** a los usuarios. Un administrador debe establecer una **contraseña temporal** en Snowflake y dársela al usuario por un canal seguro:
+
+- **Snowsight:** Admin → Users → seleccionar el usuario (ej. U_PEDRO_RAMIREZ) → **Set password** o **Reset password**. La contraseña debe cumplir la política (12 caracteres, mayúsculas, minúsculas, números, especiales).
+- **SQL (ACCOUNTADMIN):** `ALTER USER U_PEDRO_RAMIREZ SET PASSWORD = 'UnaContraseñaTemporal1!';`
+
+En el **primer login** Snowflake pedirá al usuario cambiar la contraseña; la nueva debe cumplir la Password Policy.
+
 ---
 
 # Parte 5: Convención de nombres — Por qué y cómo
@@ -266,18 +273,25 @@ Necesitas una **cuenta Snowflake** (trial o estándar) y un **usuario con rol SY
 
 # Parte 7: Cómo obtener las credenciales de Snowflake
 
-Terraform se conecta a Snowflake con: **account**, **usuario**, **contraseña** y **role**. Nunca hardcodees la contraseña en archivos versionados.
+Terraform se conecta con **organización + cuenta** (recomendado) o **account** legacy, más **usuario**, **contraseña** y **role**. Nunca hardcodees la contraseña en archivos versionados.
 
-1. **Account identifier**  
-   En **Snowsight:** Admin → **Accounts** → copia el **Account identifier** (ej. `xy12345` o `xy12345.us-east-1`). Si la región va en el identifier, en `terraform.tfvars` puedes dejar `snowflake_region` vacío.
+**Formato recomendado (cuentas con organización):**
+
+1. **Organization name y Account name**  
+   En **Snowsight:** Admin → **Accounts**. Si tu identificador es tipo `ORG.CUENTA` (ej. `LCMSCLG.WAC97526`):  
+   - `snowflake_organization_name` = primera parte (ej. `LCMSCLG`)  
+   - `snowflake_account_name` = segunda parte (ej. `WAC97526`)  
+   - Deja `snowflake_region` **vacío** cuando usas org+account (la URL es `org-account.snowflakecomputing.com` sin región). Si pones región y da error 404, quítala.
 
 2. **Usuario y contraseña**  
-   Usuario que tenga SYSADMIN (o ACCOUNTADMIN). Para no guardar la contraseña en disco:  
+   Usuario con SYSADMIN o ACCOUNTADMIN. Para no guardar la contraseña en disco:  
    `export TF_VAR_snowflake_password="tu_password"`  
-   y no la pongas en `terraform.tfvars`.
+   y no la incluyas en `terraform.tfvars`.
 
 3. **Role**  
-   El role con el que Terraform ejecutará (por defecto `SYSADMIN`). Debe poder crear y modificar objetos en la cuenta.
+   El role con el que Terraform ejecutará (por defecto `SYSADMIN`).
+
+**Opcionales:** `snowflake_host` (host completo si falla la URL por defecto), `snowflake_insecure_mode = true` solo para pruebas locales si hay error de certificado TLS (no usar en producción).
 
 ---
 
@@ -293,22 +307,30 @@ cd environments/dev   # o uat / prod
 
 Cada carpeta (`dev`, `uat`, `prod`) es un **estado de Terraform independiente**: un `terraform.tfstate` distinto. Así puedes tener DEV, UAT y PROD en la misma cuenta (o en cuentas distintas) sin mezclar planes.
 
+**Importante — Misma cuenta para DEV, UAT y PROD:**  
+Si los tres ambientes usan la **misma cuenta** Snowflake, los **functional roles (FR_*)** y **usuarios (U_*)** son de cuenta y solo se crean una vez. En este proyecto:
+
+- **DEV** crea todo: bases, warehouses, object roles, functional roles, usuarios y asocia la password policy a la cuenta. **Ejecuta DEV primero.**
+- **UAT y PROD** solo crean recursos por ambiente (ERP_UAT, WH_*_UAT, object roles OR_*_UAT, etc.) y otorgan esos object roles a los FR_* ya existentes. No vuelven a crear FR_*, ni usuarios, ni el attachment de la password policy (en el código está `create_functional_roles_and_users = false` y `attach_password_policy_to_account = false` para UAT y PROD).
+
+Orden recomendado: **DEV → UAT → PROD**.
+
 ### Paso 2: Inicializar Terraform
 
 ```bash
 terraform init
 ```
 
-Descarga el provider de Snowflake y prepara el directorio. Solo hace falta una vez (o al cambiar de provider/versión).
+Descarga el provider **Snowflake-Labs/snowflake** (versión ~> 0.87 en cada módulo; puede resolverse a 0.100.x). Cada módulo declara `required_providers` para evitar que Terraform busque el provider antiguo `hashicorp/snowflake`. Solo hace falta una vez (o al cambiar de provider/versión).
 
 ### Paso 3: Configurar variables
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
-# Edita terraform.tfvars con tu account, user, password (o usa TF_VAR_snowflake_password) y role
+# Edita terraform.tfvars: organization_name, account_name, user, password (o TF_VAR_snowflake_password), role
 ```
 
-Sin `terraform.tfvars` (o variables por `-var` / entorno), Terraform te pedirá los valores en el plan/apply.
+En el ejemplo verás `snowflake_organization_name`, `snowflake_account_name`, `snowflake_region` (puedes dejarla vacía si usas org+account y evitas 404), `snowflake_user`, `snowflake_password` y `snowflake_role`. Opcionales: `snowflake_host`, `snowflake_insecure_mode`. Sin `terraform.tfvars` (o variables por `-var` / entorno), Terraform pedirá los valores en plan/apply.
 
 ### Paso 4: Ver el plan y aplicar
 
@@ -352,7 +374,9 @@ Así puedes hacer `SELECT`, probar joins entre ERP/CRM/SCM y entender cómo se r
 
 ## 9.2 Agregar un nuevo usuario
 
-En el `main.tf` del ambiente, dentro del módulo `rbac`, en la variable `users`, añade un elemento con:
+**Solo en DEV** (o en el primer ambiente que ejecutes) se crean usuarios; en UAT y PROD con la misma cuenta los usuarios ya existen. Para añadir uno nuevo en DEV:
+
+En el `main.tf` del ambiente **dev**, dentro del módulo `rbac`, en la variable `users`, añade un elemento con:
 
 - `login_name` (convención `U_NOMBRE_APELLIDO`)  
 - `default_role` (uno de los FR_*)  
@@ -374,10 +398,16 @@ Luego: `terraform plan` y `terraform apply` en ese ambiente.
 | Problema | Qué suele pasar | Qué hacer |
 |----------|------------------|-----------|
 | `Invalid identifier` / `object does not exist` | El role con el que Terraform se conecta no tiene privilegios sobre ese objeto. | Conecta con un usuario que tenga SYSADMIN o ACCOUNTADMIN. |
+| Error de certificado TLS (`certificate is valid for ... not ORG.ACCOUNT.snowflakecomputing.com`) | La URL con formato org.cuenta tiene dos niveles y el cert no la cubre. | Usa `snowflake_organization_name` + `snowflake_account_name` (sin región), o `snowflake_host` con el host correcto; o en dev local `snowflake_insecure_mode = true` (solo pruebas). |
+| 404 al conectar (`failed to auth ... HTTP: 404`) | La URL construida no es la correcta para tu cuenta. | Con org+account deja `snowflake_region` vacío (la URL debe ser `org-account.snowflakecomputing.com`). Si usas account legacy, prueba con `snowflake_region` (ej. `us-east-1`). |
+| `Object 'FR_DATA_ANALYST' already exists` / `Object 'U_ANA_GARCIA' already exists` | UAT o PROD en la **misma cuenta** que DEV intentan crear otra vez roles o usuarios de cuenta. | En UAT y PROD el código ya usa `create_functional_roles_and_users = false`. Ejecuta **DEV primero**, luego UAT y PROD. |
+| `Object already has a PASSWORD_POLICY` | La cuenta ya tiene una policy asociada (p. ej. por DEV). | En UAT y PROD se usa `attach_password_policy_to_account = false`. Solo DEV asocia la policy a la cuenta. |
 | Password policy / attachment ya existe | La política o su asociación a la cuenta ya fue creada (por otro apply o por la UI). | Revisa en la UI; si quieres que Terraform la gestione, `terraform state rm ...` del recurso que corresponda y vuelve a aplicar (con cuidado en prod). |
-| `snowflake_role` no existe / usar `snowflake_account_role` | En versiones nuevas del provider el recurso pasó a llamarse `snowflake_account_role`. | Revisa la [doc del provider](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs) y sustituye en el código. |
-| Error al asignar role a usuario (`snowflake_grant_account_role`) | Algunas versiones usan `user_name` en lugar de `role_name` para el grantee. | Mira el recurso en el registry y ajusta los argumentos (p. ej. `user_name` = usuario, `role_name` = role otorgado). |
+| `Invalid character` / `;` en variables.tf | En HCL (Terraform) no se usan `;` para separar argumentos. | Escribe cada variable en bloque multilínea; separa argumentos con nueva línea, no con punto y coma. |
+| `snowflake_role` no existe / usar `snowflake_account_role` | En versiones nuevas del provider el recurso pasó a llamarse `snowflake_account_role`. | El código ya usa `snowflake_account_role`. Si usas provider muy antiguo, actualiza a ~> 0.87. |
+| Error al asignar role a usuario (`snowflake_grant_account_role`) | Semántica del recurso: `role_name` = role que se otorga, `user_name` = usuario (grantee). | El código ya usa `user_name` para grants a usuarios. Para grants role→role: `parent_role_name` = role que se otorga, `role_name` = grantee. |
 | State bloqueado o conflictos | Dos `apply` a la vez o state corrupto. | No ejecutes dos applies simultáneos en el mismo directorio; con backend remoto, revisa el bloqueo en el backend. |
+| Plan muestra "X to destroy, X to add" sin tocar código | Cambios previos en el código (p. ej. orden de argumentos en grants, o `count` en un recurso) hacen que Terraform vea recurso “nuevo” y destruya el “viejo”. | Es esperado tras una corrección; el resultado en Snowflake es el mismo. En el siguiente `plan` sin cambios de código deberías ver "No changes." |
 
 ---
 
@@ -405,18 +435,18 @@ snowflake-onboarding/
 ├── scripts/
 │   └── seed_data.sql
 ├── modules/
-│   ├── database/
-│   ├── warehouse/
-│   ├── security/
-│   └── rbac/
+│   ├── database/   (main.tf, variables.tf, outputs.tf, versions.tf)
+│   ├── warehouse/ (main.tf, variables.tf, outputs.tf, versions.tf)
+│   ├── security/  (main.tf, variables.tf, outputs.tf, versions.tf)
+│   └── rbac/      (main.tf, variables.tf, outputs.tf, versions.tf)
 └── environments/
     ├── dev/
     ├── uat/
     └── prod/
 ```
 
-- **modules:** Código reutilizable (database, warehouse, security, rbac); cada uno tiene `main.tf`, `variables.tf`, `outputs.tf` y comentarios en español.  
-- **environments:** Cada subcarpeta es un “stack” (dev/uat/prod) con su propio `main.tf`, variables y `terraform.tfvars.example`.  
+- **modules:** Código reutilizable (database, warehouse, security, rbac); cada uno tiene `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf` (required_providers) y comentarios en español.  
+- **environments:** Cada subcarpeta es un “stack” (dev/uat/prod) con su propio `main.tf`, variables y `terraform.tfvars.example`. En UAT y PROD se usa `create_functional_roles_and_users = false` y `attach_password_policy_to_account = false` cuando comparten cuenta con DEV.  
 - **scripts/seed_data.sql:** INSERTs de ejemplo para practicar SQL tras el primer apply.
 
 ---

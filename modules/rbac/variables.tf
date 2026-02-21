@@ -55,3 +55,11 @@ variable "users" {
     comment            = string
   }))
 }
+
+# Cuando DEV y UAT/PROD comparten la misma cuenta, los FR_* y usuarios ya existen (creados en DEV).
+# Pon false en UAT/PROD para solo crear object roles y otorgarlos a los FR_* existentes.
+variable "create_functional_roles_and_users" {
+  description = "Si true, crea los functional roles (FR_*) y usuarios. Si false, solo crea object roles y grants a los FR_* existentes (misma cuenta que DEV)."
+  type        = bool
+  default     = true
+}

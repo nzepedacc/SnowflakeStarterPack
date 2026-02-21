@@ -62,3 +62,10 @@ variable "lockout_time_mins" {
   type        = number
   default     = 15
 }
+
+# Cuando DEV y UAT/PROD comparten la misma cuenta, la policy solo se asocia una vez (en DEV).
+variable "attach_password_policy_to_account" {
+  description = "Si true, asocia la password policy a la cuenta. Pon false en UAT/PROD cuando usas la misma cuenta que DEV (solo un attachment por cuenta)."
+  type        = bool
+  default     = true
+}

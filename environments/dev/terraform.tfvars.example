@@ -1,0 +1,13 @@
+# =============================================================================
+# EJEMPLO DE VALORES PARA DEV (copiar a terraform.tfvars y rellenar)
+# =============================================================================
+# 1. Copia: cp terraform.tfvars.example terraform.tfvars
+# 2. Obtén los valores desde Snowflake (ver README.md sección "Cómo obtener credenciales")
+# 3. Nunca subas terraform.tfvars a git
+# =============================================================================
+
+snowflake_account  = "TU_ACCOUNT_ID"   # Ej: xy12345 o xy12345.us-east-1
+snowflake_region   = ""                # Dejar vacío si el account ya incluye región
+snowflake_user     = "TU_USUARIO"      # Usuario con SYSADMIN/ACCOUNTADMIN
+snowflake_password = "TU_PASSWORD"     # Mejor: export TF_VAR_snowflake_password=...
+snowflake_role     = "SYSADMIN"        # Role con permisos para crear DB, roles, etc.

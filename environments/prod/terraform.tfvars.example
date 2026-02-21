@@ -1,0 +1,7 @@
+# Copiar a terraform.tfvars y rellenar (ver README). En PROD usar credenciales restringidas.
+
+snowflake_account  = "TU_ACCOUNT_ID"
+snowflake_region   = ""
+snowflake_user     = "TU_USUARIO"
+snowflake_password = "TU_PASSWORD"
+snowflake_role     = "SYSADMIN"

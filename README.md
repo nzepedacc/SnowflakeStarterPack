@@ -5,6 +5,47 @@
 
 ---
 
+# La historia de MegaFactory — Enfoque de negocio
+
+**MegaFactory** es una empresa que necesita poner orden en sus datos. Lo que sigue es el tipo de conversaciones que tendrías con directores de área: peticiones de negocio, no de sistemas.
+
+---
+
+**Los datos por área**
+
+- **Finanzas** te dice: *“Necesitamos que los datos de facturación, costes y centros de costo estén en un solo sitio y que solo nuestro equipo pueda modificarlos; los analistas que hacen reportes solo deberían poder consultar.”*
+- **Comercial / CRM** te pide: *“Tenemos clientes, contactos y oportunidades; no queremos que logística ni finanzas entren a cambiar nuestros datos, pero sí que puedan leer lo que necesiten para sus reportes.”*
+- **Logística / Operaciones** exige: *“Envíos y proveedores son nuestra responsabilidad. Que cada área vea solo lo suyo y que nadie borre o cambie datos sin control.”*
+
+**Cargas de datos y quién hace qué**
+
+Operaciones y TI te explican: *“Vamos a traer datos desde el ERP, el CRM y los sistemas de logística con procesos ETL y ELT: cargas programadas que leen de orígenes y escriben aquí. Esas cargas no pueden competir con los reportes de la mañana ni con las tareas de mantenimiento; necesitamos recursos dedicados para ingestión, otros para consultas y dashboards, y otros para administración.”*  
+A la vez, **muchos usuarios solo consultarán**: ejecutivos, stakeholders y analistas que solo deben ver reportes y dashboards, sin poder modificar ni borrar nada. Otros sí cargarán datos o harán cambios controlados. Y un pequeño grupo tendrá que poder administrar todo (crear tablas, dar permisos, etc.). *“Que cada uno tenga solo lo que necesita”*, pide Cumplimiento.
+
+**Ambientes y cumplimiento**
+
+**Cumplimiento y Riesgos** te ha dicho claro: *“No podemos tener datos de prueba mezclados con los reales. Tienen que existir ambientes separados: uno para desarrollar y probar, otro para pruebas de aceptación antes de salir a producción, y otro solo para producción. Y que quede registrado quién puede hacer qué en cada uno.”*
+
+**Seguridad de acceso**
+
+La misma área de Cumplimiento añade: *“Queremos contraseñas fuertes, que no se reutilicen las últimas que ya usaron, y que tras varios intentos fallidos se bloquee el acceso un rato. Y en el futuro nos gustaría poder exigir un segundo factor (como una app en el móvil) para entrar.”* Es decir: políticas de contraseña y, más adelante, autenticación reforzada (MFA).
+
+---
+
+**Qué construimos y por qué (visto desde el negocio)**
+
+| Lo que pide el negocio | Lo que creamos en Snowflake |
+|------------------------|-----------------------------|
+| Tres dominios de datos (ERP, CRM, SCM) y que cada área “vea solo lo suyo” | **Bases de datos y schemas** por dominio (ERP_*, CRM_*, SCM_*) con permisos por área. |
+| Cargas ETL/ELT que no compitan con reportes ni con administración | **Warehouses separados**: uno para ingestión, otro para analítica/reportes, otro para administración; cada uno se usa para lo suyo y se apaga cuando no hay uso. |
+| Usuarios que solo consultan, otros que cargan o modifican, otros que administran | **Roles diferenciados**: perfiles tipo “solo lectura”, “analista”, “ingeniero de datos”, “administrador”; cada usuario tiene el perfil que le corresponde. |
+| Ambientes separados (desarrollo, UAT, producción) y permisos claros por ambiente | **Tres ambientes** (DEV, UAT, PROD) con sus propias bases, warehouses y permisos; primero se trabaja en DEV, luego se valida en UAT y por último se usa PROD. |
+| Contraseñas fuertes, no reutilizar, bloqueo tras intentos fallidos, y luego MFA | **Políticas de seguridad**: política de contraseña aplicada a la cuenta y documentación para activar MFA cuando el negocio lo exija. |
+
+En resumen: hay **usuarios** con necesidades distintas (solo consultar, cargar datos, administrar); **cargas ETL/ELT** que requieren recursos dedicados; **tres sistemas o dominios** (ERP, CRM, SCM); **tres ambientes** por exigencia de Cumplimiento; y **políticas de seguridad** que el área de Riesgos y Cumplimiento puede explicar en una auditoría.
+
+---
+
 Este README es tu **guía paso a paso** para entender Snowflake y levantar una cuenta ordenada, segura y lista para equipos. No asumimos que ya sabes Snowflake; explicamos **qué es cada cosa**, **por qué la usamos** y **cuándo se aplica**. Al final habrás perdido el miedo a tocar la plataforma y tendrás un patrón claro para repetir en otros proyectos.
 
 ---
@@ -153,8 +194,8 @@ La siguiente figura resume la jerarquía que creamos: cuentas → bases por domi
 │   ERP_<ENV>     │              │   CRM_<ENV>     │              │   SCM_<ENV>     │
 │   └─ FINANCE    │              │   └─ CUSTOMERS  │              │   └─ LOGISTICS  │
 │      ├─ INVOICES│              │      ├─ CONTACTS│              │      ├─ SHIPMENTS│
-│      └─ COST_   │              │      └─ OPPORT.│              │      └─ SUPPLIERS│
-│         CENTERS │              │                │              │                 │
+│      └─ COST_   │              │      └─ OPPORT. │              │      └─ SUPPLIERS│
+│         CENTERS │              │                 │              │                 │
 └─────────────────┘              └─────────────────┘              └─────────────────┘
          │                                    │                                    │
          └────────────────────────────────────┼────────────────────────────────────┘
